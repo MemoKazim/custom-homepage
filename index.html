@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <meta charset="UTF-8" />
+    <title>Terminal StartPage</title>
+    <style>
+      body {
+        background-color: #121212;
+        color: #fff;
+        font-family: "Fira Code", monospace;
+        padding: 2em;
+        margin: 0;
+        overflow-x: hidden;
+      }
+
+      /* Terminal-style input */
+      .terminal-input {
+        display: flex;
+        align-items: center;
+        font-size: 1.2em;
+        margin-bottom: 2em;
+        position: relative;
+      }
+
+      .prompt {
+        color: gray;
+        margin-right: 8px;
+      }
+
+      .terminal-field {
+        display: inline-block;
+        position: relative;
+        min-width: 300px;
+        border: none;
+        font-size: 1.2em;
+        color: #00ff00;
+      }
+
+      #urlInput {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+      }
+
+      .cursor {
+        animation: blink 1s steps(1) infinite;
+        color: #00ff00;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .card-container {
+        margin: 10rem 0 0 10rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .card {
+        width: 120px;
+        background: #1f1f1f;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        transition: 0.2s ease;
+        user-select: none; /* Prevent text selection during dragging */
+      }
+
+      .card[draggable="true"] {
+        cursor: pointer;
+      }
+
+      .card:hover {
+        background: #2a2a2a;
+      }
+
+      .card img {
+        width: 50px;
+        height: 50px; /* was 100px */
+        object-fit: cover;
+        border-radius: 6px;
+      }
+      .card .edit-btn {
+        display: none;
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 20px;
+        cursor: pointer;
+        color: #00aaff;
+        background: transparent;
+        border: none;
+      }
+      .card:hover .edit-btn {
+        display: block;
+      }
+
+      .card-title {
+        margin-top: 6px;
+        font-size: 0.9em;
+        font-weight: bold;
+        color: #00ff00;
+      }
+      .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 7px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 14px;
+        width: 20px;
+        height: 20px;
+        line-height: 18px;
+        text-align: center;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0; /* Initially hidden */
+        transition: opacity 0.3s ease;
+      }
+
+      .card:hover .remove-btn {
+        opacity: 1; /* Button will appear on hover */
+      }
+
+      /* + Button floating */
+      .add-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #00aaff;
+        color: white;
+        font-size: 28px;
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 0 10px #00aaff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .add-button:hover {
+        background: #008ecc;
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+      }
+
+      .modal-content {
+        background: #1f1f1f;
+        padding: 20px;
+        border-radius: 8px;
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .modal-content input[type="text"],
+      .modal-content input[type="file"] {
+        padding: 6px;
+        background: #2a2a2a;
+        border: none;
+        color: white;
+        border-radius: 4px;
+      }
+
+      .modal-content button {
+        margin-top: 10px;
+        padding: 8px;
+        background: #00aaff;
+        border: none;
+        color: white;
+        border-radius: 4px;
+      }
+
+      .modal-content button:hover {
+        background: #008ecc;
+      }
+      #clock {
+        text-align: center;
+        font-size: 1.5em;
+        margin-bottom: 1em;
+        color: #00ff00;
+        letter-spacing: 1px; /* Optional for extra terminal feel */
+      }
+      .menu-btn {
+        position: absolute;
+        top: 5px;
+        right: 7px;
+        background: none;
+        color: white;
+        font-size: 18px;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      /* Show menu on hover over card */
+      .card:hover .menu-btn {
+        opacity: 1;
+      }
+
+      /* Dropdown menu */
+      .menu-content {
+        display: none;
+        position: absolute;
+        top: 25px;
+        right: 0;
+        background: #333;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        width: 120px;
+        z-index: 10;
+      }
+
+      .menu-content button {
+        background: none;
+        color: white;
+        border: none;
+        padding: 8px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .menu-content button:hover {
+        background: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="clock"
+      style="
+        text-align: center;
+        font-size: 1.5em;
+        margin-bottom: 1em;
+        color: #00ff00;
+      "
+    ></div>
+    <div class="terminal-input">
+      <span class="prompt">memo@brave #</span>
+      <div class="terminal-field">
+        <span id="typedText"></span><span class="cursor">_</span>
+        <input type="text" id="urlInput" autocomplete="off" />
+      </div>
+    </div>
+
+    <div id="cardContainer" class="card-container"></div>
+
+    <button class="add-button" onclick="openAddModal()">+</button>
+
+    <!-- Modal -->
+    <div id="addModal" class="modal">
+      <div class="modal-content">
+        <h2>Add Favorite</h2>
+        <input type="text" id="siteTitle" placeholder="Site Title" />
+        <input type="text" id="siteURL" placeholder="https://example.com" />
+        <input type="file" id="siteImage" accept="image/*" />
+        <div id="imagePreview"></div>
+        <button onclick="saveSite()">Save</button>
+        <button onclick="closeAddModal()">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      const urlInput = document.getElementById("urlInput");
+      const typedText = document.getElementById("typedText");
+      const cardContainer = document.getElementById("cardContainer");
+      const addModal = document.getElementById("addModal");
+      const siteTitle = document.getElementById("siteTitle");
+      const siteURL = document.getElementById("siteURL");
+      const siteImage = document.getElementById("siteImage");
+
+      let favorites = JSON.parse(localStorage.getItem("visualBookmarks")) || [];
+
+      urlInput.addEventListener("input", () => {
+        typedText.textContent = urlInput.value;
+      });
+
+      urlInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          let url = urlInput.value.trim();
+          if (!url.startsWith("http"))
+            url = "https://google.com/search?q=" + url;
+          window.location.href = url;
+        }
+      });
+
+      function renderCards() {
+        cardContainer.innerHTML = "";
+        favorites.forEach((fav, i) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.draggable = true; // Make card draggable
+
+          const img = document.createElement("img");
+          img.src = fav.img;
+
+          const title = document.createElement("div");
+          title.className = "card-title";
+          title.textContent = fav.title;
+
+          // Create the favorite site link
+          const link = document.createElement("a");
+          link.href = fav.url;
+          link.target = "_blank"; // Open link in new tab
+          link.textContent = "Visit Site";
+
+          // Menu button (3 dots)
+          const menuBtn = document.createElement("button");
+          menuBtn.className = "menu-btn";
+          menuBtn.innerHTML = "&#8230;"; // Three vertical dots
+
+          // Menu content
+          const menuContent = document.createElement("div");
+          menuContent.className = "menu-content";
+
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = () => {
+            favorites.splice(i, 1);
+            localStorage.setItem("visualBookmarks", JSON.stringify(favorites));
+            renderCards();
+          };
+
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "Edit";
+          editBtn.onclick = () => {
+            editBookmark(i); // Pass the index of the bookmark to the edit function
+          };
+
+          menuContent.appendChild(removeBtn);
+          menuContent.appendChild(editBtn);
+          card.appendChild(menuBtn);
+          card.appendChild(menuContent);
+          card.appendChild(img);
+          card.appendChild(title);
+          cardContainer.appendChild(card);
+
+          let isDragging = false; // Track dragging state
+          let mouseDownX = 0; // Track initial mouse position for drag detection
+
+          // When the user presses the mouse down on the card
+          card.addEventListener("mousedown", (e) => {
+            mouseDownX = e.clientX; // Capture initial mouse position
+            isDragging = false; // Reset dragging state on mouse down
+          });
+
+          // Detect drag movement
+          card.addEventListener("mousemove", (e) => {
+            const dragDistance = Math.abs(e.clientX - mouseDownX); // Compare current position to initial position
+            if (dragDistance > 10) {
+              // If the user has moved the mouse more than 10px, start dragging
+              isDragging = true;
+            }
+          });
+
+          // Handle click event
+          card.addEventListener("click", (e) => {
+            if (isDragging) {
+              e.preventDefault(); // Prevent the default click action if the card was dragged
+            } else {
+              // Open the favorite site in a new tab
+              window.open(fav.url, "_blank");
+            }
+          });
+
+          // Drag and drop functionality
+          card.addEventListener("dragstart", (e) => {
+            if (!isDragging) return; // Don't start drag if the mouse wasn't moved enough
+            e.dataTransfer.setData("text/plain", i); // Store index of the dragged item
+            setTimeout(() => (card.style.display = "none"), 0); // Hide the card temporarily during drag
+          });
+
+          card.addEventListener("dragend", () => {
+            card.style.display = "block"; // Restore card visibility after drag ends
+          });
+
+          cardContainer.addEventListener("dragover", (e) => {
+            e.preventDefault(); // Allow drop
+          });
+
+          cardContainer.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const draggedIndex = e.dataTransfer.getData("text/plain");
+            const droppedIndex = i;
+
+            if (draggedIndex !== droppedIndex) {
+              const draggedItem = favorites[draggedIndex];
+              favorites.splice(draggedIndex, 1);
+              favorites.splice(droppedIndex, 0, draggedItem);
+
+              localStorage.setItem(
+                "visualBookmarks",
+                JSON.stringify(favorites)
+              );
+              renderCards(); // Re-render cards to reflect new order
+            }
+          });
+
+          // Toggle menu visibility when clicking on the 3 dots button
+          menuBtn.onclick = (e) => {
+            e.stopPropagation(); // Prevent card click event
+            menuContent.style.display =
+              menuContent.style.display === "block" ? "none" : "block";
+          };
+
+          // Close menu when clicking anywhere outside
+          document.body.addEventListener("click", () => {
+            menuContent.style.display = "none";
+          });
+        });
+      }
+
+      function openAddModal() {
+        addModal.style.display = "flex";
+      }
+
+      function closeAddModal() {
+        addModal.style.display = "none";
+        siteTitle.value = "";
+        siteURL.value = "";
+        siteImage.value = "";
+        document.getElementById("imagePreview").innerHTML = ""; // Clear image preview
+      }
+
+      function saveSite() {
+        const title = siteTitle.value.trim();
+        const url = siteURL.value.trim();
+        const file = siteImage.files[0];
+
+        if (!title || !url || !file) return alert("Fill in all fields!");
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const imageData = e.target.result;
+          favorites.push({ title, url, img: imageData });
+          localStorage.setItem("visualBookmarks", JSON.stringify(favorites));
+          closeAddModal();
+          renderCards();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      renderCards();
+      document.body.addEventListener("click", (e) => {
+        const isModalClick =
+          e.target.closest(".modal-content") || e.target.closest(".add-button");
+        if (!isModalClick) {
+          urlInput.focus();
+        }
+      });
+
+      // Clock function
+      function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById("clock").textContent = timeString;
+      }
+      setInterval(updateClock, 1000);
+      updateClock(); // Initial call
+      function editBookmark(index) {
+        const bookmark = favorites[index];
+
+        // Set the current values in the modal
+        siteTitle.value = bookmark.title;
+        siteURL.value = bookmark.url;
+        const imgElement = document.createElement("img");
+        imgElement.src = bookmark.img;
+        document.getElementById("imagePreview").innerHTML = "";
+        document.getElementById("imagePreview").appendChild(imgElement);
+
+        // Open the modal
+        addModal.style.display = "flex";
+
+        // Update the save button to handle editing
+        const saveButton = document.querySelector(".modal-content button");
+        saveButton.onclick = () => {
+          saveEditedSite(index);
+        };
+      }
+
+      function saveEditedSite(index) {
+        const title = siteTitle.value.trim();
+        const url = siteURL.value.trim();
+        const file = siteImage.files[0] || null;
+
+        if (!title || !url) return alert("Fill in all fields!");
+
+        // If an image is selected, read and update it
+        let img = favorites[index].img; // Keep current image if not edited
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            img = e.target.result;
+            updateBookmark(index, title, url, img);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          updateBookmark(index, title, url, img);
+        }
+      }
+
+      function updateBookmark(index, title, url, img) {
+        favorites[index] = { title, url, img };
+        localStorage.setItem("visualBookmarks", JSON.stringify(favorites));
+        closeAddModal(); // Close modal
+        renderCards(); // Re-render the cards
+      }
+      history.replaceState({}, "", location.hash.slice(1));
+      window.onload = function () {
+        // This prevents autofocus from focusing the URL bar in some browsers
+        document.body.focus();
+        window.focus();
+      };
+    </script>
+  </body>
+</html>
